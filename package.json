@@ -1,6 +1,11 @@
 {
   "name": "client-server-data-fetch",
   "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
     "start": "npm-run-all --parallel start-server start-client",
     "start-server": "cd server && npm start",

@@ -1,59 +1,64 @@
-import React, { useState } from 'react';
-import { Button, TextField, Typography, List, ListItem } from '@mui/material';
-import ThemeProvider from './ThemeProvider';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  Button,
+  TextField,
+  Typography,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
+  Box,
+} from '@mui/material';
+import { ThemeProvider } from './ThemeProvider';
 
-const App: React.FC = () => {
-  // State to store the concurrency value (number of simultaneous requests)
+export const App: React.FC = () => {
+  // State to manage the concurrency level
   const [concurrency, setConcurrency] = useState<number>(0);
-  // State to track if the requests have started
+  // State to check if the process has started
   const [isStarted, setIsStarted] = useState<boolean>(false);
   // State to store the results of the requests
   const [results, setResults] = useState<string[]>([]);
+  // State to manage auto-scroll feature
+  const [autoScroll, setAutoScroll] = useState<boolean>(true);
+  // Ref to handle the end of the list for auto-scroll
+  const listEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Function to handle the start button click
+  // Function to handle the start of the requests
   const handleStart = () => {
-    // Validate concurrency input
     if (concurrency < 1 || concurrency > 100) {
       alert('Please enter a valid number between 1 and 100.');
       return;
     }
 
-    // Set the state to indicate that requests have started
     setIsStarted(true);
-    // Clear previous results
     setResults([]);
-    // Start sending requests
     fetchRequests(concurrency);
   };
 
-  // Function to manage sending requests with a given concurrency
+  // Function to fetch requests with given concurrency
   const fetchRequests = async (concurrency: number) => {
-    const totalRequests = 1000; // Total number of requests to send
-    let activeRequests = 0; // Number of currently active requests
-    let completedRequests = 0; // Number of completed requests
+    const totalRequests = 1000;
+    let activeRequests = 0;
+    let completedRequests = 0;
 
-    // Function to send an individual request
+    // Function to send individual request
     const sendRequest = async (index: number) => {
       try {
-        // Send the request to the API endpoint
         const response = await fetch(`/api?index=${index}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        // Parse the response data
         const data = await response.json();
-        // Render the result on successful response
         renderResult(data.index);
       } catch (error) {
         console.error('Request failed:', error);
       } finally {
-        // Update active and completed request counts
         completedRequests += 1;
         activeRequests -= 1;
-
-        // Schedule the next request if there are remaining requests
         if (completedRequests < totalRequests) {
           scheduleNextRequest();
+        } else if (completedRequests === totalRequests) {
+          setIsStarted(false);
         }
       }
     };
@@ -61,61 +66,97 @@ const App: React.FC = () => {
     // Function to schedule the next request
     const scheduleNextRequest = () => {
       if (activeRequests < concurrency && completedRequests < totalRequests) {
-        const nextIndex = completedRequests + 1; // Use the next index
+        const nextIndex = completedRequests + 1;
         activeRequests += 1;
-        // Send the request with a delay based on concurrency
         setTimeout(() => {
           sendRequest(nextIndex);
         }, 1000 / concurrency);
       }
     };
 
-    // Initial requests launch
+    // Initial scheduling of requests based on concurrency
     for (let i = 0; i < concurrency; i++) {
       scheduleNextRequest();
     }
   };
 
-  // Function to render the result in the results list
+  // Function to render the result of a completed request
   const renderResult = (index: number) => {
     setResults((prevResults) => [...prevResults, `Request ${index} completed`]);
   };
 
+  // Function to handle form submission
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    handleStart();
+  };
+
+  // Use effect to handle auto-scroll when results are updated
+  useEffect(() => {
+    if (autoScroll && listEndRef.current) {
+      listEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [results, autoScroll]);
+
+  // Function to toggle auto-scroll
+  const toggleAutoScroll = () => {
+    setAutoScroll(!autoScroll);
+  };
+
   return (
     <ThemeProvider>
-      <div style={{ textAlign: 'center', padding: '20px' }}>
+      <Box textAlign="center" padding="20px">
         <Typography variant="h4" gutterBottom>
           Client-Server Data Fetch
         </Typography>
-        <TextField
-          label="Concurrency (1-100)"
-          type="number"
-          InputProps={{ inputProps: { min: 1, max: 100 } }}
-          value={concurrency}
-          onChange={(e) => setConcurrency(Number(e.target.value))}
-          required
-          variant="outlined"
-          style={{ margin: '10px', width: '160px' }}
-        />
+        <form onSubmit={handleSubmit}>
+          <TextField
+            label="Concurrency (1-100)"
+            type="number"
+            InputProps={{ inputProps: { min: 1, max: 100 } }}
+            value={concurrency}
+            onChange={(e) => setConcurrency(Number(e.target.value))}
+            required
+            variant="outlined"
+            style={{ margin: '10px', width: '160px' }}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            disabled={isStarted}
+            style={{ margin: '20px' }}
+          >
+            Start
+          </Button>
+        </form>
+        {results.length > 0 && (
+          <Paper
+            elevation={10}
+            style={{
+              maxWidth: '300px',
+              margin: 'auto',
+            }}
+          >
+            <List>
+              {results.map((result, index) => (
+                <ListItem key={index} divider style={{ paddingInline: '50px' }}>
+                  <ListItemText primary={result} />
+                </ListItem>
+              ))}
+              <div ref={listEndRef} />
+            </List>
+          </Paper>
+        )}
         <Button
           variant="contained"
-          color="primary"
-          onClick={handleStart}
-          disabled={isStarted}
-          style={{ margin: '20px' }}
+          color="secondary"
+          onClick={toggleAutoScroll}
+          style={{ position: 'fixed', top: '10px', right: '10px' }}
         >
-          Start
+          {autoScroll ? 'Disable AutoScroll' : 'Enable AutoScroll'}
         </Button>
-        <div style={{ marginInline: 'auto', width: 'max-content' }}>
-          <List>
-            {results.map((result, index) => (
-              <ListItem key={index}>{result}</ListItem>
-            ))}
-          </List>
-        </div>
-      </div>
+      </Box>
     </ThemeProvider>
   );
 };
-
-export default App;

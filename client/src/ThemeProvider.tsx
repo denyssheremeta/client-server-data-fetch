@@ -15,10 +15,8 @@ const theme = createTheme({
   },
 });
 
-const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   return <MuiThemeProvider theme={theme}>{children}</MuiThemeProvider>;
 };
-
-export default ThemeProvider;

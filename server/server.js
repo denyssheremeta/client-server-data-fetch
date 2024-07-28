@@ -5,16 +5,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Request limits
-let requestCounts = {};
+let requestCounts = new Map();
 const REQUEST_LIMIT = parseInt(process.env.REQUEST_LIMIT, 10) || 50;
 const CLEANUP_INTERVAL = parseInt(process.env.CLEANUP_INTERVAL, 10) || 60000;
 
 // Function to clean up old records
 const cleanupOldCounts = () => {
   const currentSecond = Math.floor(Date.now() / 1000);
-  for (const second in requestCounts) {
+  for (const [second, count] of requestCounts) {
     if (second < currentSecond) {
-      delete requestCounts[second];
+      requestCounts.delete(second);
     }
   }
 };
@@ -31,17 +31,17 @@ app.get('/api', (req, res) => {
     `Received request with index: ${index} at second: ${currentSecond}`
   );
 
-  if (!requestCounts[currentSecond]) {
-    requestCounts[currentSecond] = 0;
+  if (!requestCounts.has(currentSecond)) {
+    requestCounts.set(currentSecond, 0);
   }
 
-  if (requestCounts[currentSecond] >= REQUEST_LIMIT) {
+  if (requestCounts.get(currentSecond) >= REQUEST_LIMIT) {
     console.log(`Request limit exceeded for second: ${currentSecond}`);
     res.status(429).send('Too Many Requests');
     return;
   }
 
-  requestCounts[currentSecond] += 1;
+  requestCounts.set(currentSecond, requestCounts.get(currentSecond) + 1);
 
   const delay = Math.floor(Math.random() * 1000) + 1;
 

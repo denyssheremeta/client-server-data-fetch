@@ -23,6 +23,13 @@ export const App: React.FC = () => {
   // Ref to handle the end of the list for auto-scroll
   const listEndRef = useRef<HTMLDivElement | null>(null);
 
+  // Queue to store request indices
+  const requestQueue = useRef<number[]>([]);
+  // Ref to manage active requests count
+  const activeRequestsRef = useRef<number>(0);
+  // Ref to track completed requests
+  const completedRequestsRef = useRef<number>(0);
+
   // Function to handle the start of the requests
   const handleStart = () => {
     if (concurrency < 1 || concurrency > 100) {
@@ -32,14 +39,20 @@ export const App: React.FC = () => {
 
     setIsStarted(true);
     setResults([]);
+    activeRequestsRef.current = 0;
+    completedRequestsRef.current = 0;
+    requestQueue.current = [];
     fetchRequests(concurrency);
   };
 
   // Function to fetch requests with given concurrency
   const fetchRequests = async (concurrency: number) => {
     const totalRequests = 1000;
-    let activeRequests = 0;
-    let completedRequests = 0;
+
+    // Initialize the request queue
+    for (let i = 1; i <= totalRequests; i++) {
+      requestQueue.current.push(i);
+    }
 
     // Function to send individual request
     const sendRequest = async (index: number) => {
@@ -53,11 +66,11 @@ export const App: React.FC = () => {
       } catch (error) {
         console.error('Request failed:', error);
       } finally {
-        completedRequests += 1;
-        activeRequests -= 1;
-        if (completedRequests < totalRequests) {
+        completedRequestsRef.current += 1;
+        activeRequestsRef.current -= 1;
+        if (completedRequestsRef.current < totalRequests) {
           scheduleNextRequest();
-        } else if (completedRequests === totalRequests) {
+        } else if (completedRequestsRef.current === totalRequests) {
           setIsStarted(false);
         }
       }
@@ -65,9 +78,14 @@ export const App: React.FC = () => {
 
     // Function to schedule the next request
     const scheduleNextRequest = () => {
-      if (activeRequests < concurrency && completedRequests < totalRequests) {
-        const nextIndex = completedRequests + 1;
-        activeRequests += 1;
+      if (
+        activeRequestsRef.current < concurrency &&
+        requestQueue.current.length > 0
+      ) {
+        const nextIndex = requestQueue.current.shift()!;
+        activeRequestsRef.current += 1;
+
+        // Scheduling the next request with delay to meet the requests per second limit
         setTimeout(() => {
           sendRequest(nextIndex);
         }, 1000 / concurrency);

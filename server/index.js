@@ -4,7 +4,7 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Request limits
+// Request limit
 let requestCounts = new Map();
 const REQUEST_LIMIT = parseInt(process.env.REQUEST_LIMIT, 10) || 50;
 const CLEANUP_INTERVAL = parseInt(process.env.CLEANUP_INTERVAL, 10) || 60000;
@@ -25,8 +25,13 @@ setInterval(cleanupOldCounts, CLEANUP_INTERVAL);
 // Route for handling API requests
 app.get('/api', (req, res) => {
   const index = parseInt(req.query.index, 10);
-  const currentSecond = Math.floor(Date.now() / 1000);
 
+  // Check for the presence of an index and its format
+  if (isNaN(index)) {
+    return res.status(400).send('Invalid index parameter');
+  }
+
+  const currentSecond = Math.floor(Date.now() / 1000);
   console.log(
     `Received request with index: ${index} at second: ${currentSecond}`
   );
@@ -37,8 +42,7 @@ app.get('/api', (req, res) => {
 
   if (requestCounts.get(currentSecond) >= REQUEST_LIMIT) {
     console.log(`Request limit exceeded for second: ${currentSecond}`);
-    res.status(429).send('Too Many Requests');
-    return;
+    return res.status(429).send('Too Many Requests');
   }
 
   requestCounts.set(currentSecond, requestCounts.get(currentSecond) + 1);

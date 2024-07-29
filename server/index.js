@@ -13,11 +13,9 @@ const whitelist = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    console.log(`Origin: ${origin}`); // Доданий лог для перевірки походження запиту
     if (!origin || whitelist.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.error(`Not allowed by CORS: ${origin}`); // Доданий лог для повідомлення про помилку CORS
       callback(new Error('Not allowed by CORS'));
     }
   },

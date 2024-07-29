@@ -48,6 +48,10 @@ export const App: React.FC = () => {
   // Function to fetch requests with given concurrency
   const fetchRequests = async (concurrency: number) => {
     const totalRequests = 1000;
+    const baseUrl =
+      import.meta.env.MODE === 'development'
+        ? import.meta.env.VITE_API_URL_LOCAL
+        : import.meta.env.VITE_API_URL_DEPLOYED;
 
     // Initialize the request queue
     for (let i = 1; i <= totalRequests; i++) {
@@ -57,7 +61,7 @@ export const App: React.FC = () => {
     // Function to send individual request
     const sendRequest = async (index: number) => {
       try {
-        const response = await fetch(`/api?index=${index}`);
+        const response = await fetch(`${baseUrl}/api?index=${index}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

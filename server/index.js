@@ -1,11 +1,28 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Request limit
-let requestCounts = new Map();
+const whitelist = [
+  'https://client-server-data-fetch-client.vercel.app/',
+  'http://localhost:5173',
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+};
+
+app.use(cors(corsOptions));
+
+const requestCounts = new Map();
 const REQUEST_LIMIT = parseInt(process.env.REQUEST_LIMIT, 10) || 50;
 const CLEANUP_INTERVAL = parseInt(process.env.CLEANUP_INTERVAL, 10) || 60000;
 
@@ -57,5 +74,11 @@ app.get('/api', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  } else {
+    console.log(
+      `Server is running on https://client-server-data-fetch.onrender.com:${PORT}`
+    );
+  }
 });

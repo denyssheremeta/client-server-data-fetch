@@ -6,7 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const whitelist = [
-  'https://client-server-data-fetch-client.vercel.app/',
+  'https://client-server-data-fetch-client-j2vv71ybb.vercel.app/',
   'http://localhost:5173',
 ];
 

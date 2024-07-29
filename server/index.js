@@ -6,15 +6,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const whitelist = [
-  'https://client-server-data-fetch-client-j2vv71ybb.vercel.app/',
+  'https://client-server-data-fetch-client-j2vv71ybb.vercel.app',
+  'https://client-server-data-fetch.netlify.app',
   'http://localhost:5173',
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
+    console.log(`Origin: ${origin}`); // Доданий лог для перевірки походження запиту
     if (!origin || whitelist.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      console.error(`Not allowed by CORS: ${origin}`); // Доданий лог для повідомлення про помилку CORS
       callback(new Error('Not allowed by CORS'));
     }
   },

@@ -1,4 +1,5 @@
 import axios from 'axios';
+
 import { TOTAL_REQUESTS, MILLISECOND } from './constants';
 import { getBaseUrl } from './getBaseUrl';
 
@@ -39,7 +40,8 @@ const scheduleNextRequest = (
   setResults: React.Dispatch<React.SetStateAction<string[]>>,
   completedRequests: { count: number },
   activeRequests: { count: number },
-  setIsStarted: React.Dispatch<React.SetStateAction<boolean>>
+  setIsStarted: React.Dispatch<React.SetStateAction<boolean>>,
+  requestsPerSecond: number
 ) => {
   if (activeRequests.count < concurrency && requestQueue.length > 0) {
     const nextIndex = requestQueue.shift()!;
@@ -58,17 +60,18 @@ const scheduleNextRequest = (
             setResults,
             completedRequests,
             activeRequests,
-            setIsStarted
+            setIsStarted,
+            requestsPerSecond
           ),
         completedRequests,
         activeRequests,
         setIsStarted
       );
-    }, MILLISECOND / concurrency);
+    }, MILLISECOND / requestsPerSecond);
   }
 };
 
-// Main function to fetch requests with given concurrency
+// Main function to fetch requests with given concurrency and rate limit
 export const fetchRequests = async (
   concurrency: number,
   setResults: React.Dispatch<React.SetStateAction<string[]>>,
@@ -91,7 +94,8 @@ export const fetchRequests = async (
       setResults,
       completedRequests,
       activeRequests,
-      setIsStarted
+      setIsStarted,
+      concurrency // Use concurrency as the requests per second limit
     );
   }
 };

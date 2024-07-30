@@ -44,6 +44,12 @@ export const App: React.FC = () => {
     setAutoScroll((prev) => !prev);
   }, []);
 
+  // Memoized setConcurrency function
+  const memoizedSetConcurrency = useCallback(
+    (value: number) => setConcurrency(value),
+    []
+  );
+
   return (
     <ThemeProvider>
       <Box textAlign="center" padding="20px">
@@ -54,7 +60,7 @@ export const App: React.FC = () => {
         <RequestForm
           concurrency={concurrency}
           isStarted={isStarted}
-          setConcurrency={setConcurrency}
+          setConcurrency={memoizedSetConcurrency}
           handleSubmit={(event) => {
             event.preventDefault();
             handleStart();

@@ -6,24 +6,23 @@ interface ResultsListProps {
   listEndRef: React.RefObject<HTMLDivElement>;
 }
 
-export const ResultsList: React.FC<ResultsListProps> = ({
-  results,
-  listEndRef,
-}) => (
-  <Paper
-    elevation={10}
-    style={{
-      maxWidth: '300px',
-      margin: 'auto',
-    }}
-  >
-    <List>
-      {results.map((result, index) => (
-        <ListItem key={index} divider style={{ paddingInline: '50px' }}>
-          <ListItemText primary={result} />
-        </ListItem>
-      ))}
-      <div ref={listEndRef} />
-    </List>
-  </Paper>
+export const ResultsList: React.FC<ResultsListProps> = React.memo(
+  ({ results, listEndRef }) => (
+    <Paper
+      elevation={10}
+      style={{
+        maxWidth: '300px',
+        margin: 'auto',
+      }}
+    >
+      <List>
+        {results.map((result, index) => (
+          <ListItem key={index} divider style={{ paddingInline: '50px' }}>
+            <ListItemText primary={result} />
+          </ListItem>
+        ))}
+        <div ref={listEndRef} />
+      </List>
+    </Paper>
+  )
 );
